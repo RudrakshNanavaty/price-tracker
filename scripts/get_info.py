@@ -1,10 +1,8 @@
-from math import log
-
-
 try:
 	from sys import argv
 	from selenium import webdriver
 	from selenium.webdriver.common.by import By
+
 	import logging
 	logging.basicConfig(filename='./scripts/get_info.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 except ImportError:

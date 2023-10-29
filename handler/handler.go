@@ -6,8 +6,8 @@ import (
 	"os/exec"
 	"strconv"
 
-	"price-tracker/entities"
 	"price-tracker/database"
+	"price-tracker/entities"
 )
 
 type Handler struct {
@@ -54,7 +54,7 @@ func (h *Handler) TrackPrice(url string) (*entities.Product, error) {
 	case product := <-outputChannel:
 		h.db.AddProduct(&product)
 
-		go StartTracking(&product, h.db)
+		go startTracking(&product, h.db)
 
 		return &product, nil
 	}

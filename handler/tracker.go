@@ -10,7 +10,7 @@ import (
 	"price-tracker/entities"
 )
 
-func GetProductPrice(url string) (float64, error) {
+func getProductPrice(url string) (float64, error) {
 	cmd := exec.Command("python3", "./scripts/get_price.py", url)
 
 	output, err := cmd.Output()
@@ -26,34 +26,38 @@ func GetProductPrice(url string) (float64, error) {
 	return price, nil
 }
 
-func StartTracking(product *entities.Product, db *database.DB) {
-	desiredTime := time.Date(1, time.January, 1, 12, 0, 0, 0, time.Local)
-
+func startTracking(product *entities.Product, db *database.DB) {
 	for {
-		if time.Now().Hour() == desiredTime.Hour() {
+		scriptOutputChannel := make(chan float64)
+		dbOutputChannel := make(chan float64)
 
-			newPrice, err := GetProductPrice(product.URL)
+		go func(outputChannel chan float64) {
+			newPrice, err := getProductPrice(product.URL)
 			if err != nil {
 				return
 			}
+			outputChannel <- newPrice
+		}(scriptOutputChannel)
 
+		go func(outputChannel chan float64) {
 			oldPrice, err := db.GetPrice(product.ID)
 			if err != nil {
 				return
 			}
+			outputChannel <- oldPrice
+		}(dbOutputChannel)
 
-			if newPrice != oldPrice {
-				db.UpdatePrice(product.ID, newPrice)
-				fmt.Printf("Price updated.\n%s\n%f -> %f\n", product.Name, oldPrice, newPrice)
-			}
+		oldPrice := <-dbOutputChannel
+		newPrice := <-scriptOutputChannel
 
+		if newPrice != oldPrice {
+			db.UpdatePrice(product.ID, newPrice)
 			fmt.Printf("Price updated.\n%s\n%f -> %f\n", product.Name, oldPrice, newPrice)
-
-			// Sleep for a day before checking again.
-			time.Sleep(24 * time.Hour)
-		} else {
-			// sleep for 15 minutes for rate limiting
-			time.Sleep(15 * time.Minute)
 		}
+
+		fmt.Printf("Price updated.\n%s\n%f -> %f\n", product.Name, oldPrice, newPrice)
+
+		// Sleep for a day before checking again.
+		time.Sleep(24 * time.Hour)
 	}
 }

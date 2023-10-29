@@ -2,13 +2,12 @@ try:
 	from sys import argv
 	from selenium import webdriver
 	from selenium.webdriver.common.by import By
+
 	import logging
+	logging.basicConfig(filename='./scripts/get_price.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 except ImportError:
 	logging.error("Dependencies missing. Please run 'pip install -r ./scripts/requirements.txt'")
 	exit(1)
-
-# set up logging in ./scripts/get_price.log
-logging.basicConfig(filename='./scripts/get_price.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 try:
 	# initialise Firefox webdriver with options
